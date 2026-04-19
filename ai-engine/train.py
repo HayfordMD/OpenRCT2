@@ -3,6 +3,8 @@ import sys
 import logging
 from logging.handlers import RotatingFileHandler
 from datetime import datetime
+import glob
+import re
 from stable_baselines3 import PPO
 from stable_baselines3.common.vec_env import DummyVecEnv
 from OpenRCT2Env import OpenRCT2Env
@@ -10,8 +12,15 @@ from OpenRCT2Env import OpenRCT2Env
 # Set up logging to OpenRCT2/logs folder
 log_dir = r"C:\Users\hayfo\source\OpenRCT2\logs"
 os.makedirs(log_dir, exist_ok=True)
+
+# 1. Strip the A-latest badge from all older logs to maintain exactly one latest badge
+old_latest = glob.glob(os.path.join(log_dir, "A-latest-ai-train-*.log"))
+for old_log in old_latest:
+    clean_name = os.path.basename(old_log).replace("A-latest-", "")
+    os.rename(old_log, os.path.join(log_dir, clean_name))
+
 timestamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-log_file = os.path.join(log_dir, f"test-{timestamp}.log")
+log_file = os.path.join(log_dir, f"A-latest-ai-train-{timestamp}.log")
 
 # Create a rotating file handler: max 30MB, keep 3 backups
 handler = RotatingFileHandler(log_file, maxBytes=30*1024*1024, backupCount=3)
@@ -39,7 +48,7 @@ def main():
     # Wrap it in a DummyVecEnv, required by stable_baselines3
     vec_env = DummyVecEnv([lambda: env])
     
-    model_path = "ppo_openrct2_model"
+    model_path = "ppo_openrct2_model_v2"
     
     # Load existing model if it exists, otherwise create a new one
     if os.path.exists(f"{model_path}.zip"):
