@@ -13,9 +13,11 @@ class OpenRCT2Env(gym.Env):
     def __init__(self, host='127.0.0.1', port=1337):
         super(OpenRCT2Env, self).__init__()
         
-        # Action Space: (e.g. 0=Do Nothing, 1=Build Coaster A, 2=Build Flat Ride B, etc.)
-        # We start simple: 0 = Do Nothing, 1-3 = Build pre-approved Coaster, 4-7 = Build flat rides
-        self.action_space = spaces.Discrete(8)
+        self.action_dictionary = {}
+        self._load_human_actions()
+        
+        # Action Space dynamically matches the absolute number of unique physical clicks in the Human Sandbox!
+        self.action_space = spaces.Discrete(max(1, len(self.action_dictionary)))
 
         # Observation Space: Cash, Bank Loan, Park Value, Company Value, Park Rating, Guest Count, Admissions
         # We use a Box (continuous values) for these 7 numerical metrics
@@ -33,6 +35,55 @@ class OpenRCT2Env(gym.Env):
         
         # Start the socket server in the background
         self._start_server()
+
+    def _load_human_actions(self):
+        import glob
+        import os
+        
+        log_dir = r"C:\Users\hayfo\source\OpenRCT2\logs"
+        human_logs = glob.glob(os.path.join(log_dir, "A-latest-human-build-*.log"))
+        
+        # Add Idle action as default Action 0
+        self.action_dictionary[0] = {"action": "Idle", "args": {}}
+        action_idx = 1
+        
+        if not human_logs:
+            print("No Human Sandbox Logs found! Defaulting to Idle only.")
+            return
+
+        with open(human_logs[0], "r") as f:
+            content = f.read()
+            
+        blocks = content.split("[INTERCEPT] Action: ")[1:]
+        unique_hashes = set()
+        
+        for block in blocks:
+            lines = block.split("\n", 1)
+            action_name = lines[0].strip()
+            
+            try:
+                json_str = lines[1].strip()
+                if "Listening for" in json_str:
+                    json_str = json_str.split("Listening for")[0].strip()
+                    
+                args_dict = json.loads(json_str)
+                if "flags" in args_dict:
+                    del args_dict["flags"]
+                    
+                # Force sequence isolation to guarantee pure unique arrays
+                action_hash = action_name + json.dumps(args_dict, sort_keys=True)
+                
+                if action_hash not in unique_hashes:
+                    unique_hashes.add(action_hash)
+                    self.action_dictionary[action_idx] = {
+                        "action": action_name,
+                        "args": args_dict
+                    }
+                    action_idx += 1
+            except Exception as e:
+                pass
+                
+        print(f"[Sandbox Ingestion] Successfully Loaded {len(self.action_dictionary)} unique Sandbox Actions from telemetry!")
 
     def _start_server(self):
         print(f"Starting OpenRCT2 Gym Environment on {self.host}:{self.port}...")
@@ -107,9 +158,17 @@ class OpenRCT2Env(gym.Env):
         # Clear the old state so we strictly wait for the next incoming telemetry payload
         self.state = None 
         
-        if self.client_conn:
+        chosen_action = self.action_dictionary.get(int(action), self.action_dictionary[0])
+        action_name = chosen_action["action"]
+        
+        if self.client_conn and action_name != "Idle":
             try:
-                action_payload = json.dumps({"type": "action", "action_id": int(action)}) + "\n"
+                action_payload = json.dumps({
+                    "type": "action", 
+                    "action_id": int(action),
+                    "simulated_action": action_name,
+                    "simulated_args": chosen_action["args"]
+                }) + "\n"
                 self.client_conn.sendall(action_payload.encode('utf-8'))
             except Exception as e:
                 print(f"Error sending action: {e}")
@@ -132,19 +191,6 @@ class OpenRCT2Env(gym.Env):
         # Cash on hand (+ slight weight)
         # Debt/Loans (- penalize)
         reward = (admissions * 1.5) + (park_value * 0.05) + (cash * 0.01) + (rating * 0.5) - (loan * 0.05)
-        
-        # AI Action Lexicon (Phase 3 Mapping Strategy)
-        action_lexicon = {
-            0: "Idle (Observe)",
-            1: "Build Basic Flat Ride",
-            2: "Spawn Food Stall",
-            3: "Spawn Drink Stall",
-            4: "Hire Handyman",
-            5: "Hire Mechanic",
-            6: "Increase Park Entry Fee",
-            7: "Decrease Park Entry Fee"
-        }
-        action_name = action_lexicon.get(int(action), f"Unknown ({action})")
         
         # Make the AI's internal monologue completely visible to the human!
         print(f"[AI] Action: {action_name} | Rating: {rating} | Cash: ${cash:.2f} | Tickets: {admissions} | Reward: {reward:.4f}")

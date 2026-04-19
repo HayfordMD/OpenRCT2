@@ -11,14 +11,13 @@ function main() {
                 var payload = JSON.parse(lines[i]);
                 
                 if (payload.type === "action") {
-                    console.log("[JS Plugin] Received Action request: " + payload.action_id);
-                    
-                    if (payload.action_id === 1) {
-                        buildBaseline();
-                    } else if (payload.action_id === 4) {
-                        context.executeAction("staffhire", { autoPosition: true, staffType: 0 }, function(res) {});
-                    } else if (payload.action_id === 5) {
-                        context.executeAction("staffhire", { autoPosition: true, staffType: 1 }, function(res) {});
+                    if (payload.simulated_action) {
+                        console.log("[JS] Emulating Human Action: " + payload.simulated_action);
+                        context.executeAction(payload.simulated_action, payload.simulated_args, function(res) {
+                            if (res.error) {
+                                console.log("[JS] Action Failed: " + res.errorTitle);
+                            }
+                        });
                     }
                     
                 } else if (payload.type === "reset") {
@@ -118,64 +117,6 @@ function main() {
     });
 }
 
-function buildBaseline() {
-    console.log("[JS Plugin] Building Baseline Merry-Go-Round...");
-    var rideCreateArgs = {
-        rideType: 33, // Merry-Go-Round
-        rideObject: 11,
-        entranceObject: 0,
-        colour1: 0, // Set track colours to default
-        colour2: 2, 
-        inspectionInterval: 2
-    };
-
-    context.executeAction("ridecreate", rideCreateArgs, function(res) {
-        if (res.error) {
-            console.log("Failed to create ride: " + res.errorTitle);
-            return;
-        }
-        
-        // Dynamically get the ride ID (defaults to 0 if the park is effectively empty)
-        var rideId = (res.result !== undefined && res.result !== null) ? res.result.ride : 0;
-        
-        var trackPlaceArgs = {
-            x: 4032, y: 2368, z: 112,
-            direction: 0, ride: rideId, trackType: 266, rideType: 33,
-            brakeSpeed: 0, colour: 0, seatRotation: 4, trackPlaceFlags: 0,
-            isFromTrackDesign: false
-        };
-
-        context.executeAction("trackplace", trackPlaceArgs, function(res2) {
-            context.executeAction("rideentranceexitplace", {
-                x: 4064, y: 2432, direction: 3, ride: rideId, station: 0, isExit: false
-            }, function(res3) {
-                context.executeAction("rideentranceexitplace", {
-                    x: 4000, y: 2432, direction: 3, ride: rideId, station: 0, isExit: true
-                }, function(res4) {
-                    context.executeAction("ridesetstatus", {
-                         ride: rideId, status: 1
-                    }, function(res5) {
-                         // Build the Entrance Path connector (X: 4064, Y: 2464)
-                         // constructFlags: 1 mathematically dictates this is a Queue Line, NOT a standard path!
-                         var pathEntrance = { x: 4064, y: 2464, z: 112, object: 1, railingsObject: 0, direction: 255, slopeType: 0, slopeDirection: 0, constructFlags: 1 };
-                         context.executeAction("footpathplace", pathEntrance, function(res6) {
-                             
-                             // Build the Exit Path connector (X: 4000, Y: 2464)
-                             var pathExit = { x: 4000, y: 2464, z: 112, object: 0, railingsObject: 0, direction: 255, slopeType: 0, slopeDirection: 0, constructFlags: 0 };
-                             context.executeAction("footpathplace", pathExit, function(res7) {
-                                 
-                                 // Ensure Park is Open! (Native UI maps exact value: 0 for Open status!)
-                                 context.executeAction("parksetparameter", { parameter: 1, value: 0 }, function(res8) {
-                                     console.log("[JS Plugin] Merry-Go-Round Baseline Installed, Path Connected, & Park Opened!");
-                                 });
-                             });
-                         });
-                    });
-                });
-            });
-        });
-    });
-}
 
 registerPlugin({
     name: 'AI Bridge Plugin',
