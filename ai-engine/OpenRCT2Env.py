@@ -71,6 +71,14 @@ class OpenRCT2Env(gym.Env):
             self.client_conn = None
 
     def _get_obs(self):
+        # Wait for the Game to connect initially!
+        timeout = 0
+        while self.client_conn is None:
+            time.sleep(0.1)
+            timeout += 1
+            if timeout > 300: # 30 seconds
+                raise TimeoutError("Waited 30 seconds for OpenRCT2 engine to start up. Connection failed.")
+
         # Wait until we receive the first state payload from the Javascript Plugin
         timeout = 0
         while self.state is None:
