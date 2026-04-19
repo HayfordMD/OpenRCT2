@@ -12,7 +12,13 @@ function main() {
                 
                 if (payload.type === "action") {
                     console.log("[JS Plugin] Received Action request: " + payload.action_id);
-                    // Add AI PPO action mapping logic here!
+                    
+                    if (payload.action_id === 4) {
+                        context.executeAction("staffhire", { staffType: 0 }, function(res) {});
+                    } else if (payload.action_id === 5) {
+                        context.executeAction("staffhire", { staffType: 1 }, function(res) {});
+                    }
+                    
                 } else if (payload.type === "reset") {
                     console.log("[JS Plugin] Received Reset request!");
                     // Reset the park environment
@@ -44,6 +50,17 @@ function main() {
     socket.connect(1337, '127.0.0.1', function () {
         console.log("Successfully connected to Python AI Brain!");
         socket.write(JSON.stringify({ type: "handshake", msg: "OpenRCT2 is ready." }) + "\n");
+        
+        // Globally force the Park Gates open by default so the AI immediately starts receiving foot traffic
+        context.executeAction("parksetparameter", { parameter: 1, value: 0 }, function() {
+            console.log("[JS Plugin] Global Park Gate Unlocked natively.");
+        });
+        
+        // Multiply simulation game speed natively to blast through training epochs!
+        // 0 = Normal, 1 = Fast, 2 = Turbo, 3 = Hyper
+        context.executeAction("gamesetspeed", { speed: 3 }, function() {
+            console.log("[JS Plugin] Game Simulation Speed maxed to Hyper (3).");
+        });
     });
 
     // Send the state over to the AI every single day

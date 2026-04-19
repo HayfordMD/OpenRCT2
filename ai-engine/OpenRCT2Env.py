@@ -133,8 +133,21 @@ class OpenRCT2Env(gym.Env):
         # Debt/Loans (- penalize)
         reward = (admissions * 1.5) + (park_value * 0.05) + (cash * 0.01) + (rating * 0.5) - (loan * 0.05)
         
+        # AI Action Lexicon (Phase 3 Mapping Strategy)
+        action_lexicon = {
+            0: "Idle (Observe)",
+            1: "Build Basic Flat Ride",
+            2: "Spawn Food Stall",
+            3: "Spawn Drink Stall",
+            4: "Hire Handyman",
+            5: "Hire Mechanic",
+            6: "Increase Park Entry Fee",
+            7: "Decrease Park Entry Fee"
+        }
+        action_name = action_lexicon.get(int(action), f"Unknown ({action})")
+        
         # Make the AI's internal monologue completely visible to the human!
-        print(f"[AI] Action: {action} | Rating: {rating} | Cash: ${cash:.2f} | Tickets: {admissions} | Reward: {reward:.4f}")
+        print(f"[AI] Action: {action_name} | Rating: {rating} | Cash: ${cash:.2f} | Tickets: {admissions} | Reward: {reward:.4f}")
         
         done = False
         info = {}
