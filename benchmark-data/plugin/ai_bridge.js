@@ -24,6 +24,8 @@ function main() {
                                 console.log("Successfully Opened Park!");
                             }
                         });
+                    } else if (payload.action_id === 2) {
+                        buildBaseline();
                     }
                     // Add more action mapping logic here!
                 } else if (payload.type === "reset") {
@@ -50,10 +52,13 @@ function main() {
         console.log("Successfully connected to Python AI Brain!");
         socket.write(JSON.stringify({ type: "handshake", msg: "OpenRCT2 is ready." }) + "\n");
         
-        // Auto-open park on startup
-        context.executeAction("parksetparameter", { parameter: 1 }, function (res) {
-            console.log("[Auto-Setup] Opened the Park Gates.");
-        });
+        // Auto-open park relies on exact scenario configuration. Removed to prevent invalid parameter errors.
+        
+        // Initialize Baseline if this park has no rides!
+        if (map.rides && map.rides.length === 0) {
+            console.log("[Auto-Setup] Empty Park Detected. Triggering Baseline construction...");
+            buildBaseline();
+        }
     });
 
     // Send the state over to the AI every single day
@@ -88,6 +93,64 @@ function main() {
                 socket = null;
             }
         }
+    });
+    context.subscribe("action.execute", function(e) {
+        if (e.action === "ridecreate" || e.action === "trackplace" || e.action === "rideentranceexitplace" || e.action === "ridesetstatus") {
+            try {
+                if(socket && socket.write) {
+                    socket.write(JSON.stringify({
+                        type: "intercept",
+                        action: e.action,
+                        args: e.args
+                    }) + "\n");
+                }
+            } catch (err) {}
+        }
+    });
+}
+
+function buildBaseline() {
+    console.log("[JS Plugin] Building Baseline Merry-Go-Round...");
+    var rideCreateArgs = {
+        rideType: 33, // Merry-Go-Round
+        rideObject: 11,
+        entranceObject: 0,
+        colour1: 0, // Set track colours to default
+        colour2: 2, 
+        inspectionInterval: 2
+    };
+
+    context.executeAction("ridecreate", rideCreateArgs, function(res) {
+        if (res.error) {
+            console.log("Failed to create ride: " + res.errorTitle);
+            return;
+        }
+        
+        // Dynamically get the ride ID (defaults to 0 if the park is effectively empty)
+        var rideId = (res.result !== undefined && res.result !== null) ? res.result.ride : 0;
+        
+        var trackPlaceArgs = {
+            x: 4032, y: 2368, z: 112,
+            direction: 0, ride: rideId, trackType: 266, rideType: 33,
+            brakeSpeed: 0, colour: 0, seatRotation: 4, trackPlaceFlags: 0,
+            isFromTrackDesign: false
+        };
+
+        context.executeAction("trackplace", trackPlaceArgs, function(res2) {
+            context.executeAction("rideentranceexitplace", {
+                x: 4064, y: 2432, direction: 3, ride: rideId, station: 0, isExit: false
+            }, function(res3) {
+                context.executeAction("rideentranceexitplace", {
+                    x: 4000, y: 2432, direction: 3, ride: rideId, station: 0, isExit: true
+                }, function(res4) {
+                    context.executeAction("ridesetstatus", {
+                         ride: rideId, status: 1
+                    }, function(res5) {
+                         console.log("[JS Plugin] Merry-Go-Round Baseline Installed & Opened!");
+                    });
+                });
+            });
+        });
     });
 }
 
