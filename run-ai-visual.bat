@@ -3,7 +3,7 @@ setlocal
 
 :: Define paths
 set "openrct2Exe=C:\Users\hayfo\source\OpenRCT2\bin\openrct2.exe"
-set "pluginSrc=C:\Users\hayfo\.gemini\antigravity\brain\9619dded-8818-4a9a-a924-c8e38cae1446\scratch\ai_bridge.js"
+set "pluginSrc=C:\Users\hayfo\source\OpenRCT2\ai-engine\ai_bridge.js"
 set "userData=C:\Users\hayfo\source\OpenRCT2\benchmark-data"
 set "pluginDir=%userData%\plugin"
 set "saveFile=S:\SteamLibrary\steamapps\common\Rollercoaster Tycoon 2\Scenarios\ai_test_park.SC6"
