@@ -1358,18 +1358,25 @@ namespace OpenRCT2
 
             _uiContext->ProcessMessages();
 
-            if (_ticksAccumulator < kGameUpdateTimeMS)
-            {
-                const auto sleepTimeSec = std::min(kNetworkUpdateTimeMS, kGameUpdateTimeMS - _ticksAccumulator);
-                Platform::Sleep(static_cast<uint32_t>(sleepTimeSec * 1000.f));
-                return;
-            }
-
-            while (_ticksAccumulator >= kGameUpdateTimeMS)
+            if (gOpenRCT2Headless && Config::Get().general.uncapFPS)
             {
                 Tick();
+            }
+            else
+            {
+                if (_ticksAccumulator < kGameUpdateTimeMS)
+                {
+                    const auto sleepTimeSec = std::min(kNetworkUpdateTimeMS, kGameUpdateTimeMS - _ticksAccumulator);
+                    Platform::Sleep(static_cast<uint32_t>(sleepTimeSec * 1000.f));
+                    return;
+                }
 
-                _ticksAccumulator -= kGameUpdateTimeMS;
+                while (_ticksAccumulator >= kGameUpdateTimeMS)
+                {
+                    Tick();
+
+                    _ticksAccumulator -= kGameUpdateTimeMS;
+                }
             }
 
             _backgroundWorker.dispatchCompleted();
