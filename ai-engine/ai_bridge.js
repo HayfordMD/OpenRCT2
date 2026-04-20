@@ -13,6 +13,22 @@ function main() {
                 if (payload.type === "action") {
                     if (payload.simulated_action) {
                         console.log("[JS] Emulating Human Action: " + payload.simulated_action);
+                        
+                        // Topological Height Correction for AI!
+                        if (payload.simulated_args && payload.simulated_args.x !== undefined && payload.simulated_args.y !== undefined) {
+                            if (["footpathplace", "trackplace", "rideentranceexitplace"].indexOf(payload.simulated_action) !== -1) {
+                                var tile = map.getTile(Math.floor(payload.simulated_args.x / 32.0), Math.floor(payload.simulated_args.y / 32.0));
+                                if (tile && tile.elements) {
+                                    for (var j = 0; j < tile.elements.length; j++) {
+                                        if (tile.elements[j].type === 'surface') {
+                                            payload.simulated_args.z = tile.elements[j].baseHeight;
+                                            break;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
                         context.executeAction(payload.simulated_action, payload.simulated_args, function(res) {
                             if (res.error) {
                                 console.log("[JS] Action Failed: " + res.errorTitle);
