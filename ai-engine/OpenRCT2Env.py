@@ -20,6 +20,7 @@ class OpenRCT2Env(gym.Env):
         self.state = None
         self.valid_grid = None
         self.last_ride_customers = 0
+        self.last_action_success = True
         
         # Start the socket server in the background
         self._start_server()
@@ -185,6 +186,8 @@ class OpenRCT2Env(gym.Env):
                             self.state = message
                         elif message.get("type") == "topology":
                             self.valid_grid = message.get("grid", [])
+                        elif message.get("type") == "action_result":
+                            self.last_action_success = message.get("success", False)
                     except json.JSONDecodeError:
                         pass
         except Exception as e:
@@ -281,7 +284,14 @@ class OpenRCT2Env(gym.Env):
             reward += 5.0
         elif "rideset" in action_name or "parkset" in action_name:
             reward += 1.0
+        
+        # Penalize engine-rejected physics anomalies immediately to train valid bounding
+        if not self.last_action_success:
+            reward -= 1.0
             
+        # Reset the asynchronous validation tracker for the next execution frame
+        self.last_action_success = True
+        
         # Delta Activation Node: Instant Massive Dopamine Hit when a new customer boards!
         new_customers = max(0, ride_customers - self.last_ride_customers)
         if new_customers > 0:

@@ -34,6 +34,9 @@ function main() {
                         context.executeAction(payload.simulated_action, payload.simulated_args, function(res) {
                             if (res.error) {
                                 console.log("[JS] Action Failed: " + res.errorTitle);
+                                socket.write(JSON.stringify({ type: "action_result", success: false }) + "\n");
+                            } else {
+                                socket.write(JSON.stringify({ type: "action_result", success: true }) + "\n");
                             }
                         });
                     }
