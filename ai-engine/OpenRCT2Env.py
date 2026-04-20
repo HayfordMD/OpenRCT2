@@ -39,9 +39,9 @@ class OpenRCT2Env(gym.Env):
         # Action Space dynamically matches the absolute number of unique physical clicks in the Human Sandbox!
         self.action_space = spaces.Discrete(max(1, len(self.action_dictionary)))
 
-        # 312 variables continuously polled from the Javascript engine!
-        # Base 12 variables [Cash, Loan, ParkValue...] + 300 variables (100 Macro-Chunks x 3 metrics)
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(312,), dtype=np.float32)
+        # 412 variables continuously polled from the Javascript engine!
+        # Base 12 variables [Cash, Loan, ParkValue...] + 400 variables (100 Macro-Chunks x 4 metrics tracking Litter)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(412,), dtype=np.float32)
 
 
 
@@ -114,6 +114,14 @@ class OpenRCT2Env(gym.Env):
         for coord in self.valid_grid:
             x = coord["x"]
             y = coord["y"]
+            
+            # StaffDrop Air-Drop Vector! Target exactly the valid Grid square dynamically.
+            self.action_dictionary[action_idx] = {
+                "action": "staffdrop",
+                "args": {"x": x, "y": y, "z": coord.get("z", 16)} 
+            }
+            action_idx += 1
+            
             for direction in range(0, 4):
                     # Footpath Spawning Matrix
                     self.action_dictionary[action_idx] = {
@@ -229,7 +237,7 @@ class OpenRCT2Env(gym.Env):
             float(self.state.get("rideCustomers", 0) / 100.0)
         ], dtype=np.float32)
         
-        macro_grid = self.state.get("macroGrid", [0.0] * 300)
+        macro_grid = self.state.get("macroGrid", [0.0] * 400)
         full_obs = np.concatenate([base_obs, np.array(macro_grid, dtype=np.float32)])
         return full_obs
 

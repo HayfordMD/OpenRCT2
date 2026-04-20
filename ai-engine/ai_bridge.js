@@ -31,14 +31,48 @@ function main() {
                             }
                         }
 
-                        context.executeAction(payload.simulated_action, payload.simulated_args, function(res) {
-                            if (res.error) {
-                                console.log("[JS] Action Failed: " + res.errorTitle);
-                                socket.write(JSON.stringify({ type: "action_result", success: false }) + "\n");
-                            } else {
-                                socket.write(JSON.stringify({ type: "action_result", success: true }) + "\n");
+                        if (payload.simulated_action === "staffdrop") {
+                            var staffList = map.getAllEntities("staff");
+                            var selectedStaff = null;
+                            for(var s=0; s<staffList.length; s++) {
+                                // staffType === 0 explicitly bounds isolation targets exclusively to Handymen.
+                                if (staffList[s].staffType === 0) { 
+                                    selectedStaff = staffList[s];
+                                    break;
+                                }
                             }
-                        });
+                            
+                            if (selectedStaff) {
+                                var dropArgs = {
+                                    type: 2, 
+                                    id: selectedStaff.id, 
+                                    x: payload.simulated_args.x, 
+                                    y: payload.simulated_args.y, 
+                                    z: payload.simulated_args.z, 
+                                    playerId: 0
+                                };
+                                context.executeAction("peeppickup", dropArgs, function(res) {
+                                    if (res.error) {
+                                        socket.write(JSON.stringify({ type: "action_result", success: false }) + "\n");
+                                    } else {
+                                        socket.write(JSON.stringify({ type: "action_result", success: true }) + "\n");
+                                    }
+                                });
+                            } else {
+                                // Instant Failure if mathematical array failed tracing alive Handymen
+                                socket.write(JSON.stringify({ type: "action_result", success: false }) + "\n");
+                            }
+                        } else {
+                            // Standard generic OpenRCT2 Execution Hook
+                            context.executeAction(payload.simulated_action, payload.simulated_args, function(res) {
+                                if (res.error) {
+                                    console.log("[JS] Action Failed: " + res.errorTitle);
+                                    socket.write(JSON.stringify({ type: "action_result", success: false }) + "\n");
+                                } else {
+                                    socket.write(JSON.stringify({ type: "action_result", success: true }) + "\n");
+                                }
+                            });
+                        }
                     }
                     
                 } else if (payload.type === "reset") {
@@ -118,7 +152,7 @@ function main() {
     // Sending telemetry every 10 ticks means the AI makes exactly 4 actions per physical second!
     var telemetryTickCount = 0;
     var macroGridCache = [];
-    for(var u=0; u<300; u++) macroGridCache.push(0);
+    for(var u=0; u<400; u++) macroGridCache.push(0);
 
     context.subscribe('interval.tick', function () {
         telemetryTickCount++;
@@ -160,10 +194,11 @@ function main() {
                          var avg_height = total_tiles > 0 ? (t_height / total_tiles) : 0;
                          var pct_density = total_tiles > 0 ? (b_density / total_tiles) : 0;
                          
-                         // Note: JS pushes variables sequentially. 3 variables per chunk.
+                         // Note: JS pushes variables sequentially. 4 variables per chunk.
                          macroGridCache.push(pct_density);
                          macroGridCache.push(avg_height);
                          macroGridCache.push(0); // Initialize guest population index
+                         macroGridCache.push(0); // Initialize biological/litter volume tracking index
                      }
                  }
 
@@ -172,7 +207,18 @@ function main() {
                      var px = Math.floor((guestsList[i].x / 32) / chunkX);
                      var py = Math.floor((guestsList[i].y / 32) / chunkY);
                      if (px >= 0 && px < 10 && py >= 0 && py < 10) {
-                         var idx = (px * 10 + py) * 3 + 2; 
+                         var idx = (px * 10 + py) * 4 + 2; 
+                         macroGridCache[idx] += 1;
+                     }
+                 }
+                 
+                 // Sort live biological anomalies (litter & vomit) into chunks geometrically
+                 var littersList = map.getAllEntities("litter");
+                 for (var i = 0; i < littersList.length; i++) {
+                     var px = Math.floor((littersList[i].x / 32) / chunkX);
+                     var py = Math.floor((littersList[i].y / 32) / chunkY);
+                     if (px >= 0 && px < 10 && py >= 0 && py < 10) {
+                         var idx = (px * 10 + py) * 4 + 3; 
                          macroGridCache[idx] += 1;
                      }
                  }
