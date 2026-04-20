@@ -202,6 +202,8 @@ class OpenRCT2Env(gym.Env):
         # Micro-rewards (Dense Shaping) to artificially incentivize physical expansion actions
         if "ridecreate" in action_name:
             reward += 15.0
+        elif "entranceexit" in action_name:  # rideentranceexitplace
+            reward += 10.0
         elif "track" in action_name:  # trackplace, trackdesign
             reward += 5.0
         elif "footpath" in action_name:
