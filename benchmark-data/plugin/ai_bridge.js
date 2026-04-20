@@ -58,8 +58,13 @@ function main() {
         });
     });
 
-    // Send the state over to the AI every single day
-    context.subscribe('interval.day', function () {
+    // Throttle telemetry dynamically using native engine ticks (40 TPS)
+    // Sending telemetry every 10 ticks means the AI makes exactly 4 actions per physical second!
+    var telemetryTickCount = 0;
+    context.subscribe('interval.tick', function () {
+        telemetryTickCount++;
+        if (telemetryTickCount % 10 !== 0) return;
+        
         if (socket !== null) {
             var guestsList = map.getAllEntities("guest");
             var totalHappiness = 0;
@@ -87,6 +92,16 @@ function main() {
             var avgHappiness = guestsList.length > 0 ? (totalHappiness / guestsList.length) : 0;
             var avgNausea = guestsList.length > 0 ? (totalNausea / guestsList.length) : 0;
 
+            var rides = map.rides;
+            var totalRideCustomers = 0;
+            if (rides) {
+                for (var r = 0; r < rides.length; r++) {
+                    if (rides[r]) {
+                        totalRideCustomers += (rides[r].totalCustomers || 0);
+                    }
+                }
+            }
+
             var state = {
                 type: "state",
                 cash: park.cash,
@@ -99,7 +114,8 @@ function main() {
                 avgHappiness: avgHappiness,
                 avgNausea: avgNausea,
                 leaving: totalLeaving,
-                goHomeThoughts: totalGoHomeThoughts
+                goHomeThoughts: totalGoHomeThoughts,
+                rideCustomers: totalRideCustomers
             };
             try {
                 socket.write(JSON.stringify(state) + "\n");

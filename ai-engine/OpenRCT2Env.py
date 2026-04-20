@@ -83,7 +83,63 @@ class OpenRCT2Env(gym.Env):
             except Exception as e:
                 pass
                 
-        print(f"[Sandbox Ingestion] Successfully Loaded {len(self.action_dictionary)} unique Sandbox Actions from telemetry!")
+        # =========================================================
+        # PHASE 9: SYNTHETIC PROCEDURAL EXPANSION
+        # Shattering the Human action bounds to enable map-wide organic placement
+        # =========================================================
+        
+        # Inject 40 generalized Ride Creation intents (Flat Rides + Coasters)
+        for r_type in range(1, 41):
+            for r_obj in range(0, 3):
+                self.action_dictionary[action_idx] = {
+                    "action": "ridecreate",
+                    "args": {"rideType": r_type, "rideObject": r_obj, "entranceObject": 0, "inspectionInterval": 2}
+                }
+                action_idx += 1
+                
+        # Generate spatial coordinate matrix across Electric Fields Grassy Bounds
+        # (32 units = 1 tile). X/Y 1024 to 3584 step 512 = 6 spatial nodes per axis
+        for x in range(1024, 4096, 512):
+            for y in range(1024, 4096, 512):
+                for direction in range(0, 4):
+                    # Footpath Spawning Matrix
+                    self.action_dictionary[action_idx] = {
+                        "action": "footpathplace",
+                        "args": {"x": x, "y": y, "z": 16, "slope": 0, "constructFlags": 0, "pathObject": 0}
+                    }
+                    action_idx += 1
+                    
+                    # Track and Entrance Spawning Matrix (Bound to 6 distinct rides)
+                    for r_id in range(0, 6):
+                        # Track Straight
+                        self.action_dictionary[action_idx] = {
+                            "action": "trackplace",
+                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackPiece": 0}
+                        }
+                        action_idx += 1
+                        
+                        # Track Curve
+                        self.action_dictionary[action_idx] = {
+                            "action": "trackplace",
+                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackPiece": 1}
+                        }
+                        action_idx += 1
+                        
+                        # Ride Entrance
+                        self.action_dictionary[action_idx] = {
+                            "action": "rideentranceexitplace",
+                            "args": {"ride": r_id, "type": 0, "x": x, "y": y, "z": 16, "direction": direction}
+                        }
+                        action_idx += 1
+                        
+                        # Ride Exit
+                        self.action_dictionary[action_idx] = {
+                            "action": "rideentranceexitplace",
+                            "args": {"ride": r_id, "type": 1, "x": x, "y": y, "z": 16, "direction": direction}
+                        }
+                        action_idx += 1
+
+        print(f"[Sandbox Ingestion] Procedurally Synthesized Action Space! Expanded to {len(self.action_dictionary)} organic neural nodes!")
 
     def _start_server(self):
         print(f"Starting OpenRCT2 Gym Environment on {self.host}:{self.port}...")

@@ -52,18 +52,18 @@ def main():
     
     # Load existing model if it exists, otherwise create a new one
     try:
-        model = PPO.load("ppo_openrct2_model_v4", env=vec_env)
-        print("Loaded existing V4 PPO model.")
+        model = PPO.load("ppo_openrct2_model_v5", env=vec_env)
+        print("Loaded existing V5 PPO model.")
     except Exception as e:
-        print("No existing V4 model found or incompatible shape. Initializing new model.")
+        print("No existing V5 model found or incompatible shape. Initializing new model.")
         model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log="./ppo_rct2_tensorboard/")
 
-    print("Starting Training Loop (Phase 8: Guest Telemetry Opt)...")
+    print("Starting Training Loop (Phase 9: Synthetic Space Expansion)...")
     
     # Train forever in segments
     while True:
         model.learn(total_timesteps=10000, reset_num_timesteps=False)
-        model.save("ppo_openrct2_model_v4")
+        model.save("ppo_openrct2_model_v5")
         print("Model state saved locally.")
     
     print("\nEvaluating trained model...")
