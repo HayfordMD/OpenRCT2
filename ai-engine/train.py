@@ -48,22 +48,23 @@ def main():
     # Wrap it in a DummyVecEnv, required by stable_baselines3
     vec_env = DummyVecEnv([lambda: env])
     
-    MODEL_PATH = "ppo_openrct2_model_v3"
+    MODEL_PATH = "ppo_openrct2_model_v4"
     
     # Load existing model if it exists, otherwise create a new one
-    if os.path.exists(f"{MODEL_PATH}.zip"):
-        print(f"Loading existing model from {MODEL_PATH}.zip...")
-        model = PPO.load(MODEL_PATH, env=vec_env)
-    else:
-        print("Creating brand new PPO Model (v3)...")
-        model = PPO("MlpPolicy", vec_env, verbose=1)
-        
-    print("Starting Learning Loop... (Waiting for JS Bridge connection to fire first)")
-    # We set timesteps low so we can see it train in real-time, then save.
-    model.learn(total_timesteps=1000)
+    try:
+        model = PPO.load("ppo_openrct2_model_v4", env=vec_env)
+        print("Loaded existing V4 PPO model.")
+    except Exception as e:
+        print("No existing V4 model found or incompatible shape. Initializing new model.")
+        model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log="./ppo_rct2_tensorboard/")
+
+    print("Starting Training Loop (Phase 8: Guest Telemetry Opt)...")
     
-    print(f"Training Complete! Saving weights to {model_path}.zip")
-    model.save(model_path)
+    # Train forever in segments
+    while True:
+        model.learn(total_timesteps=10000, reset_num_timesteps=False)
+        model.save("ppo_openrct2_model_v4")
+        print("Model state saved locally.")
     
     print("\nEvaluating trained model...")
     obs = vec_env.reset()

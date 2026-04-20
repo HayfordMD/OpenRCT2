@@ -87,6 +87,16 @@ function main() {
             var avgHappiness = guestsList.length > 0 ? (totalHappiness / guestsList.length) : 0;
             var avgNausea = guestsList.length > 0 ? (totalNausea / guestsList.length) : 0;
 
+            var rides = map.rides;
+            var totalRideCustomers = 0;
+            if (rides) {
+                for (var r = 0; r < rides.length; r++) {
+                    if (rides[r]) {
+                        totalRideCustomers += (rides[r].totalCustomers || 0);
+                    }
+                }
+            }
+
             var state = {
                 type: "state",
                 cash: park.cash,
@@ -99,7 +109,8 @@ function main() {
                 avgHappiness: avgHappiness,
                 avgNausea: avgNausea,
                 leaving: totalLeaving,
-                goHomeThoughts: totalGoHomeThoughts
+                goHomeThoughts: totalGoHomeThoughts,
+                rideCustomers: totalRideCustomers
             };
             try {
                 socket.write(JSON.stringify(state) + "\n");
