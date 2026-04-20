@@ -57,6 +57,10 @@ class OpenRCT2Env(gym.Env):
             lines = block.split("\n", 1)
             action_name = lines[0].strip()
             
+            # Blacklist Game-Ending Commands (e.g., Pausing the simulation engine)
+            if action_name in ["pausetoggle", "gamesetspeed"]:
+                continue
+            
             try:
                 json_str = lines[1].strip()
                 if "Listening for" in json_str:
