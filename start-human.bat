@@ -13,4 +13,4 @@ start "Human Interceptor" cmd /k "python ai-engine\human_logger.py"
 ping 127.0.0.1 -n 3 > nul
 
 echo Launching OpenRCT2 Visual Instance...
-call run-ai-visual.bat "S:\SteamLibrary\steamapps\common\Rollercoaster Tycoon 2\Saved Games\Electric Fields-human.SV6"
+call run-ai-visual.bat "S:\SteamLibrary\steamapps\common\Rollercoaster Tycoon 2\Scenarios\Electric Fields.SC6"
