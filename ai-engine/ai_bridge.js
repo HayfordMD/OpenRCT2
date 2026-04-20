@@ -58,8 +58,13 @@ function main() {
         });
     });
 
-    // Send the state over to the AI every single day
-    context.subscribe('interval.day', function () {
+    // Throttle telemetry dynamically using native engine ticks (40 TPS)
+    // Sending telemetry every 10 ticks means the AI makes exactly 4 actions per physical second!
+    var telemetryTickCount = 0;
+    context.subscribe('interval.tick', function () {
+        telemetryTickCount++;
+        if (telemetryTickCount % 10 !== 0) return;
+        
         if (socket !== null) {
             var guestsList = map.getAllEntities("guest");
             var totalHappiness = 0;
