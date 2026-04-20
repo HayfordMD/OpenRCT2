@@ -48,17 +48,19 @@ def main():
     # Wrap it in a DummyVecEnv, required by stable_baselines3
     vec_env = DummyVecEnv([lambda: env])
     
-    MODEL_PATH = "ppo_openrct2_model_v4"
-    
-    # Load existing model if it exists, otherwise create a new one
-    try:
-        model = PPO.load("ppo_openrct2_model_v5", env=vec_env)
-        print("Loaded existing V5 PPO model.")
-    except Exception as e:
-        print("No existing V5 model found or incompatible shape. Initializing new model.")
+    models_dir = "./models"
+    os.makedirs(models_dir, exist_ok=True)
+    model_path = os.path.join(models_dir, "ppo_openrct2_v6.zip")
+
+    # Load existing model or create a new one!
+    if os.path.exists(model_path):
+        print(f"Loading existing Phase 10 Topological Model (v6)...")
+        model = PPO.load(model_path, env=vec_env)
+    else:
+        print("Creating brand new Phase 10 Topological Model (v6) dynamically mapping to valid map bounds...")
         model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log="./ppo_rct2_tensorboard/")
 
-    print("Starting Training Loop (Phase 9: Synthetic Space Expansion)...")
+    print("Starting Training Loop (Phase 10: Topological Mapping)...")
     
     # Train forever in segments
     while True:

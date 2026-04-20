@@ -13,6 +13,25 @@ class OpenRCT2Env(gym.Env):
     def __init__(self, host='127.0.0.1', port=1337):
         super(OpenRCT2Env, self).__init__()
         
+        self.host = host
+        self.port = port
+        self.server_socket = None
+        self.client_conn = None
+        self.state = None
+        self.valid_grid = None
+        self.last_ride_customers = 0
+        
+        # Start the socket server in the background
+        self._start_server()
+        
+        print("Waiting for JS Topology sweep to build Neural Generator...")
+        timeout = 0
+        while self.valid_grid is None:
+            time.sleep(0.1)
+            timeout += 1
+            if timeout > 300:
+                raise TimeoutError("Waited 30 seconds for Topology Sweep from OpenRCT2 JS Bridge.")
+                
         self.action_dictionary = {}
         self._load_human_actions()
         
@@ -23,15 +42,7 @@ class OpenRCT2Env(gym.Env):
         # [Cash, Loan, ParkValue, CompanyValue, Rating, Guests, Admissions, avgHappiness, avgNausea, Leaving, GoHomeThoughts, RideCustomers]
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(12,), dtype=np.float32)
 
-        self.host = host
-        self.port = port
-        self.server_socket = None
-        self.client_conn = None
-        self.state = None
-        self.last_ride_customers = 0
-        
-        # Start the socket server in the background
-        self._start_server()
+
 
     def _load_human_actions(self):
         import glob
@@ -98,11 +109,11 @@ class OpenRCT2Env(gym.Env):
                 }
                 action_idx += 1
                 
-        # Generate spatial coordinate matrix across Electric Fields Grassy Bounds
-        # (32 units = 1 tile). X/Y 1024 to 3584 step 512 = 6 spatial nodes per axis
-        for x in range(1024, 4096, 512):
-            for y in range(1024, 4096, 512):
-                for direction in range(0, 4):
+        # Generate spatial coordinate matrix across VALID TOPOLOGY ONLY!
+        for coord in self.valid_grid:
+            x = coord["x"]
+            y = coord["y"]
+            for direction in range(0, 4):
                     # Footpath Spawning Matrix
                     self.action_dictionary[action_idx] = {
                         "action": "footpathplace",
@@ -172,6 +183,8 @@ class OpenRCT2Env(gym.Env):
                         message = json.loads(line)
                         if message.get("type") == "state":
                             self.state = message
+                        elif message.get("type") == "topology":
+                            self.valid_grid = message.get("grid", [])
                     except json.JSONDecodeError:
                         pass
         except Exception as e:

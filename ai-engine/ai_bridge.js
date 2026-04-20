@@ -64,6 +64,41 @@ function main() {
         console.log("Successfully connected to Python AI Brain!");
         socket.write(JSON.stringify({ type: "handshake", msg: "OpenRCT2 is ready." }) + "\n");
         
+        // --- TOPOLOGICAL SWEEP ---
+        var validTiles = [];
+        for (var x = 0; x < map.size.x; x++) {
+            for (var y = 0; y < map.size.y; y++) {
+                var tile = map.getTile(x, y);
+                var isFlat = true;
+                var hasWater = false;
+                if (tile && tile.elements) {
+                    for (var j = 0; j < tile.elements.length; j++) {
+                        if (tile.elements[j].type === 'surface') {
+                            if (tile.elements[j].slope !== 0) isFlat = false;
+                            if (tile.elements[j].waterHeight > 0) hasWater = true;
+                        }
+                    }
+                }
+                if (isFlat && !hasWater && validTiles.length < 500) { // Bound to safety array of 500 tiles
+                    validTiles.push({x: x * 32, y: y * 32});
+                }
+            }
+        }
+        socket.write(JSON.stringify({ type: "topology", grid: validTiles }) + "\n");
+        console.log("[JS Plugin] Topological bounds mapped: " + validTiles.length + " tiles");
+        
+        // --- DIAGNOSTIC SEEDING ---
+        for (var i = 0; i < 5; i++) {
+            var seed_args = {x: 2048 + (i * 32), y: 1536, z: 16, direction: 255, object: 0, railingsObject: 0, slopeType: 0, slopeDirection: 0, constructFlags: 0};
+            var tile_s = map.getTile(Math.floor(seed_args.x / 32), Math.floor(seed_args.y / 32));
+            if (tile_s) {
+                for (var j = 0; j < tile_s.elements.length; j++) {
+                    if (tile_s.elements[j].type === 'surface') { seed_args.z = tile_s.elements[j].baseHeight * 16; break; }
+                }
+            }
+            context.executeAction("footpathplace", seed_args, function(){});
+        }
+        
         // Globally force the Park Gates open by default so the AI immediately starts receiving foot traffic
         context.executeAction("parksetparameter", { parameter: 1, value: 0 }, function() {
             console.log("[JS Plugin] Global Park Gate Unlocked natively.");
