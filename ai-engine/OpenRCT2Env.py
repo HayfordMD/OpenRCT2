@@ -28,6 +28,7 @@ class OpenRCT2Env(gym.Env):
         self.server_socket = None
         self.client_conn = None
         self.state = None
+        self.last_ride_customers = 0
         
         # Start the socket server in the background
         self._start_server()
@@ -268,6 +269,17 @@ class OpenRCT2Env(gym.Env):
         elif "rideset" in action_name or "parkset" in action_name:
             reward += 1.0
             
+        # Delta Activation Node: Instant Massive Dopamine Hit when a new customer boards!
+        new_customers = max(0, ride_customers - self.last_ride_customers)
+        if new_customers > 0:
+            reward += 50.0 * new_customers
+            print(f"==================================================")
+            print(f"!!! JACKPOT: GUEST ENTERED A CONNECTED RIDE !!!")
+            print(f"!!! Dopamine Reward Spike: +{50.0 * new_customers} Points !!!")
+            print(f"==================================================")
+            
+        self.last_ride_customers = ride_customers
+            
         # Make the AI's internal monologue completely visible to the human!
         print(f"[AI] Action: {action_name} | Tkts: {admissions} | RideCstmrs: {ride_customers} | Leaving: {leaving} | Reward: {reward:.4f}")
         
@@ -290,6 +302,7 @@ class OpenRCT2Env(gym.Env):
                 pass
                 
         self.state = None
+        self.last_ride_customers = 0
         obs = self._get_obs()
         return obs, {}
 
