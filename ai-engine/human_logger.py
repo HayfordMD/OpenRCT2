@@ -66,6 +66,27 @@ def start_human_server(host='127.0.0.1', port=1337):
                         state = json.loads(line)
                         if state.get("type") == "handshake":
                             print(f"[Handshake] {state.get('msg')}")
+                            bootstrap_file = r"C:\Users\hayfo\source\OpenRCT2\ai-engine\bootstrap_base.log"
+                            if os.path.exists(bootstrap_file):
+                                print("[Bootstrapper] Executing base layout natively...")
+                                with open(bootstrap_file, "r") as bf:
+                                    b_content = bf.read()
+                                blocks = b_content.split("[INTERCEPT] Action: ")[1:]
+                                for block in blocks:
+                                    b_lines = block.split("\n", 1)
+                                    action_name = b_lines[0].strip()
+                                    try:
+                                        json_str = b_lines[1].strip()
+                                        if "Listening for" in json_str: json_str = json_str.split("Listening for")[0].strip()
+                                        action_payload = json.dumps({
+                                            "type": "action", 
+                                            "simulated_action": action_name,
+                                            "simulated_args": json.loads(json_str)
+                                        }) + "\n"
+                                        conn.sendall(action_payload.encode('utf-8'))
+                                    except Exception as e:
+                                        pass
+                                print("[Bootstrapper] Fast-Forward Baseline construction complete!")
                         elif state.get("type") == "intercept":
                             print(f"\n[INTERCEPT] Action: {state['action']}")
                             print(json.dumps(state['args'], indent=2))
