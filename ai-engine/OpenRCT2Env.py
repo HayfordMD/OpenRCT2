@@ -106,7 +106,7 @@ class OpenRCT2Env(gym.Env):
                     # Footpath Spawning Matrix
                     self.action_dictionary[action_idx] = {
                         "action": "footpathplace",
-                        "args": {"x": x, "y": y, "z": 16, "direction": 255, "object": 0, "railingsObject": 0, "slope": 0, "constructFlags": 0}
+                        "args": {"x": x, "y": y, "z": 16, "direction": 255, "object": 0, "railingsObject": 0, "slopeType": 0, "slopeDirection": 0, "constructFlags": 0}
                     }
                     action_idx += 1
                     
