@@ -21,7 +21,9 @@ function main() {
                                 if (tile && tile.elements) {
                                     for (var j = 0; j < tile.elements.length; j++) {
                                         if (tile.elements[j].type === 'surface') {
-                                            payload.simulated_args.z = tile.elements[j].baseHeight;
+                                            // The engine's internal Z grid coordinates iterate in units of 16 corresponding to OpenRCT2 drawing thresholds!
+                                            // Placing z=7 pushes the footpath physically into the underground bedrock, violating placement.
+                                            payload.simulated_args.z = tile.elements[j].baseHeight * 16;
                                             break;
                                         }
                                     }
