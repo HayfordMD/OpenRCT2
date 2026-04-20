@@ -19,11 +19,11 @@ class OpenRCT2Env(gym.Env):
         # Action Space dynamically matches the absolute number of unique physical clicks in the Human Sandbox!
         self.action_space = spaces.Discrete(max(1, len(self.action_dictionary)))
 
-        # Observation Space: Cash, Bank Loan, Park Value, Company Value, Park Rating, Guest Count, Admissions
-        # We use a Box (continuous values) for these 7 numerical metrics
+        # Observation Space: Cash, Bank Loan, Park Value, Company Value, Park Rating, Guest Count, Admissions, Happiness, Nausea, Leaving, GoHomeThoughts
+        # We use a Box (continuous values) for these 11 numerical metrics
         self.observation_space = spaces.Box(
-            low=np.array([-np.inf, 0.0, 0.0, -np.inf, 0.0, 0.0, 0.0]), 
-            high=np.array([np.inf, np.inf, np.inf, np.inf, 1000.0, 10000.0, 10000.0]), 
+            low=np.array([-np.inf, 0.0, 0.0, -np.inf, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]), 
+            high=np.array([np.inf, np.inf, np.inf, np.inf, 1000.0, 10000.0, 10000.0, 255.0, 255.0, 10000.0, 10000.0]), 
             dtype=np.float32
         )
 
@@ -148,7 +148,11 @@ class OpenRCT2Env(gym.Env):
             float(self.state.get("companyValue", 0)),
             float(self.state.get("rating", 0)),
             float(self.state.get("guests", 0)),
-            float(self.state.get("totalAdmissions", 0))
+            float(self.state.get("totalAdmissions", 0)),
+            float(self.state.get("avgHappiness", 0)),
+            float(self.state.get("avgNausea", 0)),
+            float(self.state.get("leaving", 0)),
+            float(self.state.get("goHomeThoughts", 0))
         ], dtype=np.float32)
 
     def step(self, action):
@@ -184,16 +188,19 @@ class OpenRCT2Env(gym.Env):
         rating = obs[4]
         guests = obs[5]
         admissions = obs[6]  # Cumulative lifetime guests who paid for tickets
+        leaving = obs[9]
+        go_home_thoughts = obs[10]
         
         # Reward Mapping Strategy:
         # Admissions represent the lifeblood of ride tickets and park entry fees (+ massive weight)
         # Park Value represents active ride construction (+ strong weight)
         # Cash on hand (+ slight weight)
         # Debt/Loans (- penalize)
-        reward = (admissions * 1.5) + (park_value * 0.05) + (cash * 0.01) + (rating * 0.5) - (loan * 0.05)
+        # Guests leaving or thinking about going home (- massive penalty)
+        reward = (admissions * 1.5) + (park_value * 0.05) + (cash * 0.01) + (rating * 0.5) - (loan * 0.05) - (leaving * 5.0) - (go_home_thoughts * 2.5)
         
         # Make the AI's internal monologue completely visible to the human!
-        print(f"[AI] Action: {action_name} | Rating: {rating} | Cash: ${cash:.2f} | Tickets: {admissions} | Reward: {reward:.4f}")
+        print(f"[AI] Action: {action_name} | Tkts: {admissions} | Leaving: {leaving} | HomeThoughts: {go_home_thoughts} | Reward: {reward:.4f}")
         
         done = False
         info = {}

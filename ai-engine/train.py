@@ -48,14 +48,14 @@ def main():
     # Wrap it in a DummyVecEnv, required by stable_baselines3
     vec_env = DummyVecEnv([lambda: env])
     
-    model_path = "ppo_openrct2_model_v2"
+    MODEL_PATH = "ppo_openrct2_model_v3"
     
     # Load existing model if it exists, otherwise create a new one
-    if os.path.exists(f"{model_path}.zip"):
-        print(f"Loading existing model from {model_path}.zip...")
-        model = PPO.load(model_path, env=vec_env)
+    if os.path.exists(f"{MODEL_PATH}.zip"):
+        print(f"Loading existing model from {MODEL_PATH}.zip...")
+        model = PPO.load(MODEL_PATH, env=vec_env)
     else:
-        print("Creating brand new PPO Model...")
+        print("Creating brand new PPO Model (v3)...")
         model = PPO("MlpPolicy", vec_env, verbose=1)
         
     print("Starting Learning Loop... (Waiting for JS Bridge connection to fire first)")

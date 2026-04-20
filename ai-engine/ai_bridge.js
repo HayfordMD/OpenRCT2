@@ -70,9 +70,25 @@ function main() {
             var guestsList = map.getAllEntities("guest");
             var totalHappiness = 0;
             var totalNausea = 0;
+            var totalLeaving = 0;
+            var totalGoHomeThoughts = 0;
+            
             for (var i = 0; i < guestsList.length; i++) {
                 totalHappiness += guestsList[i].happiness;
                 totalNausea += guestsList[i].nausea;
+                
+                if (guestsList[i].getFlag("leavingPark")) {
+                    totalLeaving += 1;
+                }
+                
+                var thoughts = guestsList[i].thoughts;
+                if (thoughts) {
+                    for (var t = 0; t < thoughts.length; t++) {
+                        if (thoughts[t].type === "go_home") {
+                            totalGoHomeThoughts += 1;
+                        }
+                    }
+                }
             }
             var avgHappiness = guestsList.length > 0 ? (totalHappiness / guestsList.length) : 0;
             var avgNausea = guestsList.length > 0 ? (totalNausea / guestsList.length) : 0;
@@ -87,7 +103,9 @@ function main() {
                 guests: park.guests,
                 totalAdmissions: park.totalAdmissions,
                 avgHappiness: avgHappiness,
-                avgNausea: avgNausea
+                avgNausea: avgNausea,
+                leaving: totalLeaving,
+                goHomeThoughts: totalGoHomeThoughts
             };
             try {
                 socket.write(JSON.stringify(state) + "\n");
