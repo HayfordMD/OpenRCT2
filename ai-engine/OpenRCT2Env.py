@@ -106,37 +106,37 @@ class OpenRCT2Env(gym.Env):
                     # Footpath Spawning Matrix
                     self.action_dictionary[action_idx] = {
                         "action": "footpathplace",
-                        "args": {"x": x, "y": y, "z": 16, "slope": 0, "constructFlags": 0, "pathObject": 0}
+                        "args": {"x": x, "y": y, "z": 16, "direction": 255, "object": 0, "railingsObject": 0, "slope": 0, "constructFlags": 0}
                     }
                     action_idx += 1
                     
                     # Track and Entrance Spawning Matrix (Bound to 6 distinct rides)
                     for r_id in range(0, 6):
-                        # Track Straight
+                        # Track Straight (trackType 0)
                         self.action_dictionary[action_idx] = {
                             "action": "trackplace",
-                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackPiece": 0}
+                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 0, "rideType": 4, "isFromTrackDesign": False}
                         }
                         action_idx += 1
                         
-                        # Track Curve
+                        # Track Curve (trackType 1)
                         self.action_dictionary[action_idx] = {
                             "action": "trackplace",
-                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackPiece": 1}
+                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 1, "rideType": 4, "isFromTrackDesign": False}
                         }
                         action_idx += 1
                         
                         # Ride Entrance
                         self.action_dictionary[action_idx] = {
                             "action": "rideentranceexitplace",
-                            "args": {"ride": r_id, "type": 0, "x": x, "y": y, "z": 16, "direction": direction}
+                            "args": {"ride": r_id, "station": 0, "isExit": False, "x": x, "y": y, "direction": direction}
                         }
                         action_idx += 1
                         
                         # Ride Exit
                         self.action_dictionary[action_idx] = {
                             "action": "rideentranceexitplace",
-                            "args": {"ride": r_id, "type": 1, "x": x, "y": y, "z": 16, "direction": direction}
+                            "args": {"ride": r_id, "station": 0, "isExit": True, "x": x, "y": y, "direction": direction}
                         }
                         action_idx += 1
 
