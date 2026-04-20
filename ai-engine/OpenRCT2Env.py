@@ -199,6 +199,16 @@ class OpenRCT2Env(gym.Env):
         # Guests leaving or thinking about going home (- massive penalty)
         reward = (admissions * 1.5) + (park_value * 0.05) + (cash * 0.01) + (rating * 0.5) - (loan * 0.05) - (leaving * 5.0) - (go_home_thoughts * 2.5)
         
+        # Micro-rewards (Dense Shaping) to artificially incentivize physical expansion actions
+        if "ridecreate" in action_name:
+            reward += 15.0
+        elif "track" in action_name:  # trackplace, trackdesign
+            reward += 5.0
+        elif "footpath" in action_name:
+            reward += 2.0
+        elif "rideset" in action_name or "parkset" in action_name:
+            reward += 1.0
+            
         # Make the AI's internal monologue completely visible to the human!
         print(f"[AI] Action: {action_name} | Tkts: {admissions} | Leaving: {leaving} | HomeThoughts: {go_home_thoughts} | Reward: {reward:.4f}")
         
