@@ -13,4 +13,4 @@ start "Python AI Brain" cmd /k "python ai-engine\train.py"
 ping 127.0.0.1 -n 3 > nul
 
 echo Launching OpenRCT2 Visual Instance...
-call run-ai-visual.bat "C:\Users\hayfo\source\OpenRCT2\benchmark-data\save\Electric Fields.park"
+call run-ai-visual.bat "S:\SteamLibrary\steamapps\common\Rollercoaster Tycoon 2\Saved Games\Electric Fields AI.SV6"
