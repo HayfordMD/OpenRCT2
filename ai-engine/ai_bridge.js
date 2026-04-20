@@ -24,13 +24,7 @@ function main() {
                     console.log("[JS Plugin] Received Reset request!");
                     // Reset the park environment
                 } else if (payload.type === "config") {
-                    if (payload.mode === "human") {
-                        // Initialize Baseline exclusively for the Human Sandbox if park is empty!
-                        if (map.rides && map.rides.length === 0) {
-                            console.log("[Auto-Setup] Empty Park Detected. Triggering Baseline construction...");
-                            buildBaseline();
-                        }
-                    }
+                    // Config processing
                 }
             }
         } catch (e) {
