@@ -50,17 +50,17 @@ def main():
     
     models_dir = "./models"
     os.makedirs(models_dir, exist_ok=True)
-    model_path = os.path.join(models_dir, "ppo_openrct2_v6.zip")
+    model_path = os.path.join(models_dir, "ppo_openrct2_v7.zip")
 
     # Load existing model or create a new one!
     if os.path.exists(model_path):
-        print(f"Loading existing Phase 10 Topological Model (v6)...")
+        print(f"Loading existing Phase 11 Structural Macro-Mapping Model (v7)...")
         model = PPO.load(model_path, env=vec_env)
     else:
-        print("Creating brand new Phase 10 Topological Model (v6) dynamically mapping to valid map bounds...")
+        print("Creating brand new Phase 11 Spatial Matrix Model (v7) processing 300% expanded observation bounds natively...")
         model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log="./ppo_rct2_tensorboard/")
 
-    print("Starting Training Loop (Phase 10: Topological Mapping)...")
+    print("Starting Training Loop (Phase 11: Regional Observability Integration)...")
     
     # Train forever in segments
     while True:

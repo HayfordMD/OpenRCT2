@@ -39,9 +39,9 @@ class OpenRCT2Env(gym.Env):
         # Action Space dynamically matches the absolute number of unique physical clicks in the Human Sandbox!
         self.action_space = spaces.Discrete(max(1, len(self.action_dictionary)))
 
-        # 12 variables continuously polled from the Javascript engine!
-        # [Cash, Loan, ParkValue, CompanyValue, Rating, Guests, Admissions, avgHappiness, avgNausea, Leaving, GoHomeThoughts, RideCustomers]
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(12,), dtype=np.float32)
+        # 312 variables continuously polled from the Javascript engine!
+        # Base 12 variables [Cash, Loan, ParkValue...] + 300 variables (100 Macro-Chunks x 3 metrics)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(312,), dtype=np.float32)
 
 
 
@@ -214,7 +214,7 @@ class OpenRCT2Env(gym.Env):
             if timeout > 3000: # 30 seconds
                 raise TimeoutError("Waited 30 seconds for next game tick. Did the game crash?")
         
-        return np.array([
+        base_obs = np.array([
             float(self.state.get("cash", 0)),
             float(self.state.get("bankLoan", 0)),
             float(self.state.get("value", 0)),
@@ -225,9 +225,13 @@ class OpenRCT2Env(gym.Env):
             float(self.state.get("avgHappiness", 0)),
             float(self.state.get("avgNausea", 0)),
             float(self.state.get("leaving", 0)),
-            float(self.state.get("goHomeThoughts", 0)),
-            float(self.state.get("rideCustomers", 0))
+            float(self.state.get("goHomeThoughts", 0) / 10.0),
+            float(self.state.get("rideCustomers", 0) / 100.0)
         ], dtype=np.float32)
+        
+        macro_grid = self.state.get("macroGrid", [0.0] * 300)
+        full_obs = np.concatenate([base_obs, np.array(macro_grid, dtype=np.float32)])
+        return full_obs
 
     def step(self, action):
         """

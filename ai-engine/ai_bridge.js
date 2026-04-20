@@ -117,12 +117,68 @@ function main() {
     // Throttle telemetry dynamically using native engine ticks (40 TPS)
     // Sending telemetry every 10 ticks means the AI makes exactly 4 actions per physical second!
     var telemetryTickCount = 0;
+    var macroGridCache = [];
+    for(var u=0; u<300; u++) macroGridCache.push(0);
+
     context.subscribe('interval.tick', function () {
         telemetryTickCount++;
         if (telemetryTickCount % 10 !== 0) return;
         
         if (socket !== null) {
             var guestsList = map.getAllEntities("guest");
+            
+            // --- Phase 11: MACRO-REGIONAL SPATIAL COMPRESSOR ---
+            // Natively extract spatial layout into 100 discrete regions every 1 real-world second (40 ticks)!
+            if (telemetryTickCount % 40 === 0) {
+                 macroGridCache = [];
+                 var chunkX = Math.ceil(map.size.x / 10);
+                 var chunkY = Math.ceil(map.size.y / 10);
+
+                 for(var cx=0; cx<10; cx++){
+                     for(var cy=0; cy<10; cy++){
+                         var b_density = 0;
+                         var t_height = 0;
+                         var total_tiles = 0;
+                         
+                         for(var x=(cx*chunkX); x<((cx+1)*chunkX); x++) {
+                             for(var y=(cy*chunkY); y<((cy+1)*chunkY); y++) {
+                                 if(x >= map.size.x || y >= map.size.y) continue;
+                                 total_tiles++;
+                                 var tile = map.getTile(x, y);
+                                 if (tile && tile.elements) {
+                                     var hasBuilding = false;
+                                     for (var j = 0; j < tile.elements.length; j++) {
+                                          var type = tile.elements[j].type;
+                                          if (type === 'track' || type === 'footpath') hasBuilding = true;
+                                          if (type === 'surface') t_height += tile.elements[j].baseHeight;
+                                     }
+                                     if (hasBuilding) b_density++;
+                                 }
+                             }
+                         }
+                         
+                         var avg_height = total_tiles > 0 ? (t_height / total_tiles) : 0;
+                         var pct_density = total_tiles > 0 ? (b_density / total_tiles) : 0;
+                         
+                         // Note: JS pushes variables sequentially. 3 variables per chunk.
+                         macroGridCache.push(pct_density);
+                         macroGridCache.push(avg_height);
+                         macroGridCache.push(0); // Initialize guest population index
+                     }
+                 }
+
+                 // Sort live peep entities into spatial regions safely
+                 for (var i = 0; i < guestsList.length; i++) {
+                     var px = Math.floor((guestsList[i].x / 32) / chunkX);
+                     var py = Math.floor((guestsList[i].y / 32) / chunkY);
+                     if (px >= 0 && px < 10 && py >= 0 && py < 10) {
+                         var idx = (px * 10 + py) * 3 + 2; 
+                         macroGridCache[idx] += 1;
+                     }
+                 }
+            }
+
+
             var totalHappiness = 0;
             var totalNausea = 0;
             var totalLeaving = 0;
@@ -171,7 +227,8 @@ function main() {
                 avgNausea: avgNausea,
                 leaving: totalLeaving,
                 goHomeThoughts: totalGoHomeThoughts,
-                rideCustomers: totalRideCustomers
+                rideCustomers: totalRideCustomers,
+                macroGrid: macroGridCache
             };
             try {
                 socket.write(JSON.stringify(state) + "\n");
