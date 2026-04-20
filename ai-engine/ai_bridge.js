@@ -274,6 +274,7 @@ function main() {
                 leaving: totalLeaving,
                 goHomeThoughts: totalGoHomeThoughts,
                 rideCustomers: totalRideCustomers,
+                totalRides: rides ? rides.length : 0,
                 macroGrid: macroGridCache
             };
             try {
