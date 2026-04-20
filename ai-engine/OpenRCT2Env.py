@@ -94,7 +94,7 @@ class OpenRCT2Env(gym.Env):
             for r_obj in range(0, 3):
                 self.action_dictionary[action_idx] = {
                     "action": "ridecreate",
-                    "args": {"rideType": r_type, "rideObject": r_obj, "entranceObject": 0, "inspectionInterval": 2}
+                    "args": {"rideType": r_type, "rideObject": r_obj, "entranceObject": 0, "colour1": 0, "colour2": 0, "inspectionInterval": 2}
                 }
                 action_idx += 1
                 
@@ -115,14 +115,14 @@ class OpenRCT2Env(gym.Env):
                         # Track Straight (trackType 0)
                         self.action_dictionary[action_idx] = {
                             "action": "trackplace",
-                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 0, "rideType": 4, "isFromTrackDesign": False}
+                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 0, "rideType": 4, "brakeSpeed": 0, "colour": 0, "seatRotation": 0, "trackPlaceFlags": 0, "isFromTrackDesign": False}
                         }
                         action_idx += 1
                         
                         # Track Curve (trackType 1)
                         self.action_dictionary[action_idx] = {
                             "action": "trackplace",
-                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 1, "rideType": 4, "isFromTrackDesign": False}
+                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 1, "rideType": 4, "brakeSpeed": 0, "colour": 0, "seatRotation": 0, "trackPlaceFlags": 0, "isFromTrackDesign": False}
                         }
                         action_idx += 1
                         
