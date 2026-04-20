@@ -152,7 +152,7 @@ function main() {
     // Sending telemetry every 10 ticks means the AI makes exactly 4 actions per physical second!
     var telemetryTickCount = 0;
     var macroGridCache = [];
-    for(var u=0; u<400; u++) macroGridCache.push(0);
+    for(var u=0; u<500; u++) macroGridCache.push(0);
 
     context.subscribe('interval.tick', function () {
         telemetryTickCount++;
@@ -194,11 +194,12 @@ function main() {
                          var avg_height = total_tiles > 0 ? (t_height / total_tiles) : 0;
                          var pct_density = total_tiles > 0 ? (b_density / total_tiles) : 0;
                          
-                         // Note: JS pushes variables sequentially. 4 variables per chunk.
+                         // Note: JS pushes variables sequentially. 5 variables per chunk.
                          macroGridCache.push(pct_density);
                          macroGridCache.push(avg_height);
                          macroGridCache.push(0); // Initialize guest population index
                          macroGridCache.push(0); // Initialize biological/litter volume tracking index
+                         macroGridCache.push(0); // Initialize infrastructure gateways (Entrances/Exits) tracking index
                      }
                  }
 
@@ -207,7 +208,7 @@ function main() {
                      var px = Math.floor((guestsList[i].x / 32) / chunkX);
                      var py = Math.floor((guestsList[i].y / 32) / chunkY);
                      if (px >= 0 && px < 10 && py >= 0 && py < 10) {
-                         var idx = (px * 10 + py) * 4 + 2; 
+                         var idx = (px * 10 + py) * 5 + 2; 
                          macroGridCache[idx] += 1;
                      }
                  }
@@ -218,8 +219,40 @@ function main() {
                      var px = Math.floor((littersList[i].x / 32) / chunkX);
                      var py = Math.floor((littersList[i].y / 32) / chunkY);
                      if (px >= 0 && px < 10 && py >= 0 && py < 10) {
-                         var idx = (px * 10 + py) * 4 + 3; 
+                         var idx = (px * 10 + py) * 5 + 3; 
                          macroGridCache[idx] += 1;
+                     }
+                 }
+                 
+                 // Phase 14: Extract physical Entrances and Exits into topological Sector constraints!
+                 if (map.rides) {
+                     for (var r=0; r<map.rides.length; r++) {
+                         var r_obj = map.rides[r];
+                         if (r_obj && r_obj.stations) {
+                             for (var s=0; s<r_obj.stations.length; s++) {
+                                 var station = r_obj.stations[s];
+                                 if (station) {
+                                     // Process Entrance Location
+                                     if (station.entrance) {
+                                         var e_px = Math.floor((station.entrance.x / 32) / chunkX);
+                                         var e_py = Math.floor((station.entrance.y / 32) / chunkY);
+                                         if (e_px >= 0 && e_px < 10 && e_py >= 0 && e_py < 10) {
+                                             var idx = (e_px * 10 + e_py) * 5 + 4;
+                                             macroGridCache[idx] += 1;
+                                         }
+                                     }
+                                     // Process Exit Location
+                                     if (station.exit) {
+                                         var ex_px = Math.floor((station.exit.x / 32) / chunkX);
+                                         var ex_py = Math.floor((station.exit.y / 32) / chunkY);
+                                         if (ex_px >= 0 && ex_px < 10 && ex_py >= 0 && ex_py < 10) {
+                                             var idx = (ex_px * 10 + ex_py) * 5 + 4;
+                                             macroGridCache[idx] += 1;
+                                         }
+                                     }
+                                 }
+                             }
+                         }
                      }
                  }
             }

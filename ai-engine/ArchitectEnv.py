@@ -40,8 +40,8 @@ class ArchitectEnv(gym.Env):
         # Action Space maps uniquely to structural actions ONLY!
         self.action_space = spaces.Discrete(max(1, len(self.action_dictionary)))
 
-        # 413 variables! (12 base variables + 1 totalRides count + 400 spatial cells)
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(413,), dtype=np.float32)
+        # 513 variables! (13 base variables + 500 spatial cells tracing entrances geometrically)
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(513,), dtype=np.float32)
 
 
 
@@ -231,7 +231,7 @@ class ArchitectEnv(gym.Env):
             float(self.state.get("totalRides", 0))
         ], dtype=np.float32)
         
-        macro_grid = self.state.get("macroGrid", [0.0] * 400)
+        macro_grid = self.state.get("macroGrid", [0.0] * 500)
         full_obs = np.concatenate([base_obs, np.array(macro_grid, dtype=np.float32)])
         return full_obs
 

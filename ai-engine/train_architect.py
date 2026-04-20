@@ -50,22 +50,22 @@ def main():
     
     models_dir = "./models"
     os.makedirs(models_dir, exist_ok=True)
-    model_path = os.path.join(models_dir, "ppo_architect_v1.zip")
+    model_path = os.path.join(models_dir, "ppo_architect_v2.zip")
 
     # Load existing model or create a new one!
     if os.path.exists(model_path):
-        print(f"Loading existing Phase 13 Target Specialization Model (v1)...")
+        print(f"Loading existing Phase 14 Target Tracking Architectural Model (v2)...")
         model = PPO.load(model_path, env=vec_env)
     else:
-        print("Creating brand new Phase 13 Architect Model (v1) isolated structurally natively...")
+        print("Creating brand new Phase 14 Architect Model (v2) incorporating Gateway/Entrance Density Topologies natively...")
         model = PPO("MlpPolicy", vec_env, verbose=1, tensorboard_log="./ppo_rct2_tensorboard/")
 
-    print("Starting Training Loop (Phase 13: Architectural Segregation)...")
+    print("Starting Training Loop (Phase 14: Infrastructure Gateway Tracking)...")
     
     # Train forever in segments
     while True:
         model.learn(total_timesteps=10000, reset_num_timesteps=False)
-        model.save("ppo_architect_v1")
+        model.save("ppo_architect_v2")
         print("Model state saved locally.")
     
     print("\nEvaluating trained model...")
