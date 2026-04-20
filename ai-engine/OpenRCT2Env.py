@@ -206,8 +206,6 @@ class OpenRCT2Env(gym.Env):
             reward += 10.0
         elif "track" in action_name:  # trackplace, trackdesign
             reward += 5.0
-        elif "footpath" in action_name:
-            reward += 2.0
         elif "rideset" in action_name or "parkset" in action_name:
             reward += 1.0
             
