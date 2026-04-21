@@ -63,6 +63,15 @@ function main() {
                                 socket.write(JSON.stringify({ type: "action_result", success: false }) + "\n");
                             }
                         } else {
+                            // Phase 16: Dynamic Construction Target Mapping
+                            // The AI guesses ride IDs statically (0 to 5), but the Engine assigns dynamically!
+                            // We intercept construction actions and automatically bind them to the LAST created project!
+                            if (payload.simulated_action === "trackplace" || payload.simulated_action === "rideentranceexitplace") {
+                                if (map.rides && map.rides.length > 0) {
+                                    payload.simulated_args.ride = map.rides.length - 1;
+                                }
+                            }
+                            
                             // Standard generic OpenRCT2 Execution Hook
                             context.executeAction(payload.simulated_action, payload.simulated_args, function(res) {
                                 if (res.error) {
@@ -108,16 +117,18 @@ function main() {
                 var tile = map.getTile(x, y);
                 var isFlat = true;
                 var hasWater = false;
+                var local_z = 16;
                 if (tile && tile.elements) {
                     for (var j = 0; j < tile.elements.length; j++) {
                         if (tile.elements[j].type === 'surface') {
                             if (tile.elements[j].slope !== 0) isFlat = false;
                             if (tile.elements[j].waterHeight > 0) hasWater = true;
+                            local_z = tile.elements[j].baseHeight * 16;
                         }
                     }
                 }
                 if (isFlat && !hasWater && validTiles.length < 500) { // Bound to safety array of 500 tiles
-                    validTiles.push({x: x * 32, y: y * 32});
+                    validTiles.push({x: x * 32, y: y * 32, z: local_z});
                 }
             }
         }

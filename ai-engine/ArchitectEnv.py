@@ -114,12 +114,13 @@ class ArchitectEnv(gym.Env):
         for coord in self.valid_grid:
             x = coord["x"]
             y = coord["y"]
+            z = coord.get("z", 16)
             
             for direction in range(0, 4):
                     # Footpath Spawning Matrix
                     self.action_dictionary[action_idx] = {
                         "action": "footpathplace",
-                        "args": {"x": x, "y": y, "z": 16, "direction": 255, "object": 0, "railingsObject": 0, "slopeType": 0, "slopeDirection": 0, "constructFlags": 0}
+                        "args": {"x": x, "y": y, "z": z, "direction": 255, "object": 0, "railingsObject": 0, "slopeType": 0, "slopeDirection": 0, "constructFlags": 0}
                     }
                     action_idx += 1
                     
@@ -128,14 +129,14 @@ class ArchitectEnv(gym.Env):
                         # Track Straight (trackType 0)
                         self.action_dictionary[action_idx] = {
                             "action": "trackplace",
-                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 0, "rideType": 4, "brakeSpeed": 0, "colour": 0, "seatRotation": 0, "trackPlaceFlags": 0, "isFromTrackDesign": False}
+                            "args": {"x": x, "y": y, "z": z, "direction": direction, "ride": r_id, "trackType": 0, "rideType": 4, "brakeSpeed": 0, "colour": 0, "seatRotation": 0, "trackPlaceFlags": 0, "isFromTrackDesign": False}
                         }
                         action_idx += 1
                         
                         # Track Curve (trackType 1)
                         self.action_dictionary[action_idx] = {
                             "action": "trackplace",
-                            "args": {"x": x, "y": y, "z": 16, "direction": direction, "ride": r_id, "trackType": 1, "rideType": 4, "brakeSpeed": 0, "colour": 0, "seatRotation": 0, "trackPlaceFlags": 0, "isFromTrackDesign": False}
+                            "args": {"x": x, "y": y, "z": z, "direction": direction, "ride": r_id, "trackType": 1, "rideType": 4, "brakeSpeed": 0, "colour": 0, "seatRotation": 0, "trackPlaceFlags": 0, "isFromTrackDesign": False}
                         }
                         action_idx += 1
                         
@@ -260,22 +261,16 @@ class ArchitectEnv(gym.Env):
         # Wait for the next Day's telemetry to arrive
         obs = self._get_obs()
         
-        # Reward function: 
-        # Increase in park rating and cash are good. Debt is heavily penalized.
-        cash = obs[0]
-        loan = obs[1]
-        park_value = obs[2]
-        rating = obs[4]
-        guests = obs[5]
-        admissions = obs[6]  # Cumulative lifetime guests who paid for tickets
+        # Phase 15: Completely eradicated Financial & Nausea constraints from the Architectural matrix.
+        # It is NO LONGER punished for organically dropping park cash to generate structures!
+        reward = 0.0
+        
+        admissions = obs[6]
         leaving = obs[9]
-        go_home_thoughts = obs[10]
-        ride_customers = obs[11] # Guest specific ride utilization!
+        ride_customers = obs[11]
         current_rides = obs[12]
         
-        # Penalize non-structural metrics aggressively (loans, guests leaving)
-        reward = (admissions * 1.5) + (ride_customers * 2.0) + (park_value * 0.05) + (cash * 0.01) + (rating * 0.5) - (loan * 0.05) - (leaving * 5.0) - (go_home_thoughts * 2.5)
-        
+        # If the Architect mathematically succeeds at adding Rides structurally directly to the geometry:
         if current_rides > self.last_total_rides:
             print(f"[Architect Matrix] +75.0 REWARD - SUCCESSFULLY BOUND ACTIVE OPERABLE RIDE TO TOPOLOGY!")
             reward += 75.0

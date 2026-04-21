@@ -1,14 +1,14 @@
 @echo off
 setlocal
 
-echo Starting OpenRCT2 Machine Learning Protocol...
+echo Starting Phase 15 Architect Specialization Matrix...
 echo.
 
 echo Cleaning up ghost Python instances to free port 1337...
 taskkill /IM python.exe /F 2>nul
 
-echo Launching Python Deep Learning Training Engine...
-start "Python AI Brain" cmd /k "python ai-engine\train.py"
+echo Launching The Architect Neural Array (train_architect.py)...
+start "Architect Brain" cmd /k "python ai-engine\train_architect.py"
 
 ping 127.0.0.1 -n 12 > nul
 
