@@ -43,6 +43,8 @@ class ArchitectEnv(gym.Env):
         # 513 variables! (13 base variables + 500 spatial cells tracing entrances geometrically)
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(513,), dtype=np.float32)
 
+        # Diagnostic Trap tracking
+        self.step_count = 0
 
 
     def _load_human_actions(self):
@@ -276,8 +278,19 @@ class ArchitectEnv(gym.Env):
             reward += 75.0
             self.last_total_rides = current_rides
 
-        # Penalize engine-rejected physics anomalies heavily to train valid bounding natively.
+        # Phase 17: Early-Crash Diagnostic Geometry Trap
+        self.step_count += 1
         if not self.last_action_success:
+            if self.step_count <= 50 and action_name == "footpathplace":
+                print("==================================================")
+                print(f"!!! CRITICAL TOPOLOGY VALIDATION FAILURE !!!")
+                print(f"Action Attempted: {action_name}")
+                print(f"Arguments: {json.dumps(chosen_action['args'])}")
+                print(f"The Game Engine strictly rejected this placement.")
+                print(f"Your Z-height calculation or Tile mapping logic is geometrically broken!")
+                print("==================================================")
+                raise RuntimeError("Phase 17 Verification Crash: Topography matrix failed validation in the early diagnostic bounds!")
+            # Penalize engine-rejected physics anomalies heavily to train valid bounding natively.
             reward -= 5.0
             
         # Reset the asynchronous validation tracker for the next execution frame

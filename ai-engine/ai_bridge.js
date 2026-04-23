@@ -118,16 +118,22 @@ function main() {
                 var isFlat = true;
                 var hasWater = false;
                 var local_z = 16;
+                var isOwned = false;
+                var isOccupied = false;
                 if (tile && tile.elements) {
                     for (var j = 0; j < tile.elements.length; j++) {
                         if (tile.elements[j].type === 'surface') {
                             if (tile.elements[j].slope !== 0) isFlat = false;
                             if (tile.elements[j].waterHeight > 0) hasWater = true;
+                            if (tile.elements[j].hasOwnership || tile.elements[j].hasConstructionRights) isOwned = true;
                             local_z = tile.elements[j].baseHeight * 16;
+                        } else {
+                            // Phase 17: Explicitly reject tiles containing Paths, Tracks, Scenery, or Trees!
+                            isOccupied = true;
                         }
                     }
                 }
-                if (isFlat && !hasWater && validTiles.length < 500) { // Bound to safety array of 500 tiles
+                if (isFlat && !hasWater && isOwned && !isOccupied && validTiles.length < 500) { // Bound to safety array of 500 tiles
                     validTiles.push({x: x * 32, y: y * 32, z: local_z});
                 }
             }
